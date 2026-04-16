@@ -2,7 +2,7 @@
 
 Post-training structured pruning that uses SAM-style perturbations as a sensitivity probe. Clusters of neurons whose removal causes only a small loss increase — i.e. those in flat, redundant regions of the loss landscape — are pruned, inducing robustness without adversarial training.
 
-**Paper:** *Sparsify to Robustify: Flatness-Guided Structured Pruning for Robust Neural Networks* 
+**Paper:** *Sparsify to Robustify: Flatness-Guided Structured Pruning for Robust Neural Networks* (ICML submission)
 
 ---
 
@@ -35,7 +35,7 @@ python prune.py --dataset cifar10 --arch resnet18 --prune_fraction 0.7 --device 
 | `--checkpoint` | *(auto)* | Path to pretrained `.pth`. Auto-resolved from `models/` if not set |
 | `--models_dir` | `models` | Directory containing pretrained checkpoints |
 | `--prune_fraction` | `0.7` | Target sparsity — `0.7` = 70%, `0.9` = 90% |
-| `--rho` | `0.3` | SAM perturbation radius ρ |
+| `--rho` | `2` | SAM perturbation radius ρ, applied independently per neuron |
 | `--num_clusters` | `20` | Agglomerative clusters per layer |
 | `--fine_tune_epochs` | `3` | Fine-tuning epochs after each layer is pruned |
 | `--fine_tune_lr` | `0.01` | Fine-tuning learning rate |
@@ -55,7 +55,7 @@ python prune.py --dataset cifar10 --arch resnet18 --prune_fraction 0.7 --device 
 ```bash
 for pf in 0.1 0.5 0.7 0.9; do
     python prune.py --dataset cifar10 --arch resnet18 --prune_fraction $pf \
-        --rho 0.3 --fine_tune_epochs 3 --device cuda:0
+        --rho 2 --fine_tune_epochs 40 --batch_size 128 --device cuda:0
 done
 ```
 
@@ -64,7 +64,7 @@ done
 ```bash
 for pf in 0.1 0.5 0.7; do
     python prune.py --dataset cifar10 --arch wrn28_10 --prune_fraction $pf \
-        --rho 0.3 --fine_tune_epochs 3 --device cuda:0
+        --rho 2 --fine_tune_epochs 40 --batch_size 128 --device cuda:0
 done
 ```
 
@@ -73,7 +73,7 @@ done
 ```bash
 for pf in 0.1 0.5 0.7; do
     python prune.py --dataset cifar100 --arch wrn28_10 --prune_fraction $pf \
-        --rho 0.3 --fine_tune_epochs 3 --batch_size 256 --device cuda:0
+        --rho 2 --fine_tune_epochs 3 --batch_size 128 --device cuda:0
 done
 ```
 
@@ -86,11 +86,11 @@ Phase 1 (SAM sensitivity scoring) is the expensive step. Once it runs, the score
 ```bash
 # First run — scores all clusters and saves CSV
 python prune.py --dataset cifar10 --arch resnet18 --prune_fraction 0.7 \
-    --rho 0.3 --fine_tune_epochs 3 --device cuda:0
+    --rho 2 --fine_tune_epochs 40 --device cuda:0
 
 # Subsequent runs — skip Phase 1, load existing CSV
 python prune.py --dataset cifar10 --arch resnet18 --prune_fraction 0.7 \
-    --rho 0.3 --fine_tune_epochs 3 --device cuda:0 --skip_sensitivity
+    --rho 2 --fine_tune_epochs 40 --device cuda:0 --skip_sensitivity
 ```
 
 Note: `--rho` and `--num_clusters` must match the original run when using `--skip_sensitivity`, as they determine the CSV filename.
@@ -101,12 +101,12 @@ Note: `--rho` and `--num_clusters` must match the original run when using `--ski
 
 All outputs are written to `outputs/` and never touch the `models/` directory containing your pretrained checkpoints.
 
-For a run with `--arch resnet18 --dataset cifar10 --prune_fraction 0.7 --rho 0.3 --fine_tune_epochs 3`:
+For a run with `--arch resnet18 --dataset cifar10 --prune_fraction 0.7 --rho 2 --fine_tune_epochs 40`:
 
 | File | Description |
 |------|-------------|
-| `outputs/logs/fgsp_resnet18_cifar10_rho0.3_K20_ft3e_07PR_sensitivity.csv` | Per-cluster sensitivity scores from Phase 1 |
-| `outputs/models/fgsp_resnet18_cifar10_rho0.3_K20_ft3e_07PR.pth` | Final pruned checkpoint with masks baked in |
+| `outputs/logs/fgsp_resnet18_cifar10_rho2_K20_ft40e_07PR_sensitivity.csv` | Per-cluster sensitivity scores from Phase 1 |
+| `outputs/models/fgsp_resnet18_cifar10_rho2_K20_ft40e_07PR.pth` | Final pruned checkpoint with masks baked in |
 
 The sensitivity CSV columns: `layer_name`, `cluster_id`, `sensitivity_score`, `neuron_indices`, `num_neurons`.
 
