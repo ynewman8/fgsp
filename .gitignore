@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+outputs/
+logs/
+models/
+*.pth
+*.csv
+venv/
+*.ipynb
+.ipynb_checkpoints/
+data/
+figs/
