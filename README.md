@@ -97,6 +97,21 @@ Note: `--rho` and `--num_clusters` must match the original run when using `--ski
 
 ---
 
+## Evaluating Pruned Models
+
+The `evaluate.py` script runs a comprehensive suite of robustness metrics against a given model checkpoint. This includes clean accuracy, adversarial PGD attacks (L2 and Linf), CIFAR-C distribution shifts, FGSM, Pixel attacks, Label Noise robustness, and OOD ROC-AUC against SVHN.
+
+```bash
+python evaluate.py \
+    --checkpoint outputs/models/fgsp_resnet18_cifar10_rho2_K20_ft40e_07PR.pth \
+    --arch resnet18 \
+    --dataset cifar10 \
+    --device cuda:0 \
+    --output_csv eval_results.csv
+```
+
+---
+
 ## Output Files
 
 All outputs are written to `outputs/` and never touch the `models/` directory containing your pretrained checkpoints.
